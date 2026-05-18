@@ -1,36 +1,44 @@
 #include <iostream>
+#include <cmath>
+#include <functional>
 #include "matrix.h"
 
 using namespace std;
 
+// Nonlinear system F(x, y) = 0
+//   f1: x^2 + y^2 - 5 = 0
+//   f2: x^2 - y - 3   = 0
+Matrix<double> nonlinear_system(const Matrix<double>& X) {
+    Matrix<double> F(2, 1);
+    double x = X(0, 0);
+    double y = X(1, 0);
+
+    F(0, 0) = x * x + y * y - 5.0;
+    F(1, 0) = x * x - y - 3.0;
+
+    return F;
+}
+
 int main() {
-    cout << "--- Linear System Solver (Ax = b) Test ---" << endl;
+    cout << "--- Newton-Raphson Solver Test ---" << endl;
 
-    // 1. 初始化系数矩阵 A (3x3)
-    Matrix<double> A(3, 3);
-    A(0,0) = 2; A(0,1) = 1; A(0,2) = 1;
-    A(1,0) = 4; A(1,1) = 3; A(1,2) = 3;
-    A(2,0) = 8; A(2,1) = 7; A(2,2) = 9;
-    
-    // 2. 初始化结果列向量 b (3x1)
-    Matrix<double> b(3, 1);
-    b(0,0) = 4;
-    b(1,0) = 10;
-    b(2,0) = 24;
+    // Initial guess near (2.5, 1.5)
+    Matrix<double> guess(2, 1);
+    guess(0, 0) = 2.5;
+    guess(1, 0) = 1.5;
 
-    cout << "Matrix A:\n" << A;
-    cout << "Vector b:\n" << b;
+    cout << "Initial guess:\n" << guess;
 
-    // 3. 求解 Ax = b
     try {
-        Matrix<double> x = A.solve(b);
-        cout << "\nSolution vector x:\n" << x;
-        
-        // 4. 验算: A * x 是否等于 b
-        cout << "\nVerification (A * x should equal b):\n" << A * x;
-        
+        Matrix<double> root = Matrix<double>::newton_raphson(nonlinear_system, guess);
+
+        cout << "\nRoot found:\n" << root;
+
+        // Verify that F(root) is close to zero
+        cout << "\nF(root) should be near zero:\n" << nonlinear_system(root);
+
     } catch (const exception& e) {
-        cerr << "Error solving system: " << e.what() << endl;
+        cerr << "Solver failed: " << e.what() << endl;
     }
 
     return 0;
